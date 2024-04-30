@@ -96,29 +96,17 @@ if __name__ == "__main__":
     ## 1. Launch your navigation stack
     ## (Customize this block to add your own navigation stack)
     ##########################################################################################
-    
-    launch_file = join(base_path, '..', 'jackal_helper/launch/move_base_DWA.launch')
+
+    controller_path = rospack.get_path('lics')
+#    script_path = join(controller_path, 'scripts', 'test_transformer.py')
+    launch_file = join(controller_path, 'launch', 'controller.launch')
     nav_stack_process = subprocess.Popen([
         'roslaunch',
         launch_file,
+        'goal_x:=' + str(GOAL_POSITION[0]),
+        'goal_y:=' + str(GOAL_POSITION[1]),
+        'goal_psi:=' + str(INIT_POSITION[2])
     ])
-    
-    # Make sure your navigation stack recives the correct goal position defined in GOAL_POSITION
-    import actionlib
-    from geometry_msgs.msg import Quaternion
-    from move_base_msgs.msg import MoveBaseGoal, MoveBaseAction
-    nav_as = actionlib.SimpleActionClient('/move_base', MoveBaseAction)
-    mb_goal = MoveBaseGoal()
-    mb_goal.target_pose.header.frame_id = 'odom'
-    mb_goal.target_pose.pose.position.x = GOAL_POSITION[0]
-    mb_goal.target_pose.pose.position.y = GOAL_POSITION[1]
-    mb_goal.target_pose.pose.position.z = 0
-    mb_goal.target_pose.pose.orientation = Quaternion(0, 0, 0, 1)
-
-    nav_as.wait_for_server()
-    nav_as.send_goal(mb_goal)
-
-
 
 
     ##########################################################################################

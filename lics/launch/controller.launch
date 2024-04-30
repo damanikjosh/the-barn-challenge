@@ -1,0 +1,12 @@
+<launch>
+  <arg name="goal_x" default="0" />
+  <arg name="goal_y" default="10" />
+  <arg name="goal_psi" default="1.57" />
+
+  <!-- Run run.py on pkg lics inside folder script -->
+  <node pkg="lics" type="run.py" name="lics" output="screen">
+    <param name="goal_x" value="$(arg goal_x)" />
+    <param name="goal_y" value="$(arg goal_y)" />
+    <param name="goal_psi" value="$(arg goal_psi)" />
+  </node>
+</launch>

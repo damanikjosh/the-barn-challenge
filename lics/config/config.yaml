@@ -1,0 +1,22 @@
+gym:
+  world_idx: 59
+  gui: true
+  rviz: true
+  rate: 10
+  max_steps: 200
+
+robot:
+  use_sim_time: true
+  remap_cmd_vel: 'move_base/cmd_vel'
+  base_global_planner: "global_planner/GlobalPlanner"
+  base_local_planner: "base_local_planner/TrajectoryPlannerROS"
+  los: 2.0
+  laser_clip: 5.0
+  threshold_dist: 2.5
+  threshold_v: 0.0
+  max_v: 1.5
+  min_v: -0.5
+  max_w: 1.2
+  min_w: -1.2
+  max_inflation_radius: 1.0
+  min_inflation_radius: 0.3

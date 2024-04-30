@@ -13,6 +13,7 @@ From: ros:melodic
     export PATH="/venv/bin:$PATH"
     pip3 install --upgrade pip
     pip3 install defusedxml rospkg netifaces numpy
+    pip3 install -r /jackal_ws/src/the-barn-challenge/lics/requirements.txt
     
     cd /jackal_ws/src
     git clone https://github.com/jackal/jackal.git --branch melodic-devel
@@ -22,7 +23,7 @@ From: ros:melodic
 
     source /opt/ros/melodic/setup.bash
     cd ..
-    rosdep init; rosdep update
+    rosdep init; rosdep update --rosdistro melodic
     rosdep install -y --from-paths . --ignore-src --rosdistro=melodic
     source devel/setup.bash
     catkin_make

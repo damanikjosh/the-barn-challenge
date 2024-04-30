@@ -1,0 +1,27 @@
+<launch>
+  <!-- Start the navigation stack -->
+  <arg name="base_global_planner" default="navfn/NavfnROS" />
+  <arg name="base_local_planner" default="dwa_local_planner/DWAPlannerROS" />
+  <arg name="remap_cmd_vel" default="move_base/cmd_vel" />
+
+  <!-- The configuration files are loaded from jackal_helper -->
+  <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
+
+    <rosparam file="$(find jackal_helper)/configs/params/costmap_common_params.yaml" command="load" ns="global_costmap" />
+    <rosparam file="$(find jackal_helper)/configs/params/costmap_common_params.yaml" command="load" ns="local_costmap" />
+
+    <rosparam file="$(find jackal_helper)/configs/params/odom_nav_params/global_costmap_params.yaml" command="load" />
+    <rosparam file="$(find jackal_helper)/configs/params/odom_nav_params/local_costmap_params.yaml" command="load" />
+
+    <rosparam file="$(find jackal_helper)/configs/params/base_global_planner_params.yaml" command="load" />
+    <rosparam file="$(find jackal_helper)/configs/params/base_local_planner_params.yaml" command="load" />
+    <rosparam file="$(find jackal_helper)/configs/params/move_base_params.yaml" command="load" />
+
+    <!-- Use global_planner instead of navfn -->
+    <param name="base_global_planner" type="string" value="$(arg base_global_planner)" />
+    <param name="base_local_planner" value="$(arg base_local_planner)" />
+
+    <remap from="odom" to="odometry/filtered" />
+    <remap from="cmd_vel" to="$(arg remap_cmd_vel)" />
+  </node>
+</launch>
