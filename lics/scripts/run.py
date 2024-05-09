@@ -12,7 +12,6 @@ from utils import load_config
 DEVICE = torch.device('cpu')
 MODEL_FOLDER = 'models'  # Change the model path here
 MODEL_FILE = 'transformer_99.pth'  # Change the model file here
-CONTROL_FREQ = 20  # Hz. # Change the control frequency here
 
 config_dict = easydict.EasyDict({
     "input_dim": 32,
@@ -28,14 +27,12 @@ config_dict = easydict.EasyDict({
 })
 
 if __name__ == '__main__':
-
-    config = load_config()
     rospack = rospkg.RosPack()
     lics_path = rospack.get_path('lics')
     model_path = os.path.join(lics_path, MODEL_FOLDER, MODEL_FILE)
 
     print('Initializing robot...')
-    robot = Robot(**config['robot'])
+    robot = Robot()
     print('Robot initialized')
 
     print('Initializing model...')
@@ -46,13 +43,10 @@ if __name__ == '__main__':
     model.eval()
     print('Model weights loaded')
 
-    goal_x = rospy.get_param('~goal_x', 0)
-    goal_y = rospy.get_param('~goal_y', 10)
-    goal_psi = rospy.get_param('~goal_psi', 1.57)
+    # Get parameters from ROS parameter server
+    control_freq = rospy.get_param('~control_freq', 20)
 
-    robot.set_goal(goal_x, goal_y, goal_psi)
-
-    rate = rospy.Rate(CONTROL_FREQ)
+    rate = rospy.Rate(control_freq)
 
     # Initial warm-up
     for _ in range(10):
@@ -67,5 +61,6 @@ if __name__ == '__main__':
             action, _, _ = model(obs, local_goal)
 
         action = action.squeeze().cpu().numpy()
+        print(f'Odom: {robot.odom}, Action: {action}')
         robot.set_velocity(action[0], action[1])
         rate.sleep()

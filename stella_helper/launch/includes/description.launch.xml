@@ -1,0 +1,6 @@
+<launch>
+  <arg name="urdf_file" default="$(find xacro)/xacro --inorder '$(find stella_helper)/urdf/stella.xacro'" />
+
+  <param  command="$(arg urdf_file)" name="robot_description" />
+</launch>
+

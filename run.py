@@ -43,7 +43,7 @@ if __name__ == "__main__":
     
     if args.world_idx < 300:  # static environment from 0-299
         world_name = "BARN/world_%d.world" %(args.world_idx)
-        INIT_POSITION = [-2.25, 3, 1.57]  # in world frame
+        INIT_POSITION = [-2.25, 3, 0]  # in world frame
         GOAL_POSITION = [0, 10]  # relative to the initial position
     elif args.world_idx < 360:  # Dynamic environment from 300-359
         world_name = "DynaBARN/world_%d.world" %(args.world_idx - 300)
@@ -99,7 +99,7 @@ if __name__ == "__main__":
 
     controller_path = rospack.get_path('lics')
 #    script_path = join(controller_path, 'scripts', 'test_transformer.py')
-    launch_file = join(controller_path, 'launch', 'controller.launch')
+    launch_file = join(controller_path, 'launch', 'jackal.launch')
     nav_stack_process = subprocess.Popen([
         'roslaunch',
         launch_file,
@@ -179,6 +179,6 @@ if __name__ == "__main__":
         f.write("%d %d %d %d %.4f %.4f\n" %(args.world_idx, success, collided, (curr_time - start_time)>=100, curr_time - start_time, nav_metric))
     
     gazebo_process.terminate()
-    gazebo_process.wait()
+    # gazebo_process.wait()
     nav_stack_process.terminate()
-    nav_stack_process.wait()
+    # nav_stack_process.wait()

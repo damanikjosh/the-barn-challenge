@@ -1,7 +1,7 @@
 <launch>
   <!-- Start the navigation stack -->
-  <arg name="base_global_planner" default="navfn/NavfnROS" />
-  <arg name="base_local_planner" default="dwa_local_planner/DWAPlannerROS" />
+  <arg name="base_global_planner" default="global_planner/GlobalPlanner" />
+  <arg name="base_local_planner" default="base_local_planner/TrajectoryPlannerROS" />
   <arg name="remap_cmd_vel" default="move_base/cmd_vel" />
 
   <!-- The configuration files are loaded from jackal_helper -->

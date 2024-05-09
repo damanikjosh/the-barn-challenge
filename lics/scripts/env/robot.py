@@ -1,4 +1,5 @@
 import os
+import yaml
 import rospy
 import rospkg
 import subprocess
@@ -13,9 +14,6 @@ from nav_msgs.msg import Odometry, Path
 from robot_localization.srv import SetPose
 from geometry_msgs.msg import Twist, PoseStamped, PoseWithCovarianceStamped
 
-rospack = rospkg.RosPack()
-navigation_path = rospack.get_path('jackal_navigation')
-helper_path = rospack.get_path('jackal_helper')
 
 STATE_NORMAL = 0
 STATE_WAIT = 1
@@ -24,39 +22,27 @@ STATE_WAIT = 1
 class Robot:
     def __init__(
             self,
-            use_sim_time=True,
-            remap_cmd_vel='move_base/cmd_vel',
-            base_global_planner='navfn/NavfnROS',
-            base_local_planner='eband_local_planner/EBandPlannerROS',
-            los=2.0,  # Line of sight distance
-            laser_clip=5.0,  # Maximum laser distance
-            threshold_dist=0.5,  # Threshold distance for reducing the velocity
-            threshold_v=0.25,
-            max_v=2.0,
-            min_v=-0.5,
-            max_w=1.57,
-            min_w=-1.57,
-            min_inflation_radius=0.3,
-            max_inflation_radius=1.0
     ):
         # self.lp_client = None
         self.inflater_client = None
 
         # ROS initialization and parameter setting
         rospy.init_node('robot', anonymous=True)
-        rospy.set_param('/use_sim_time', use_sim_time)
 
-        # Launch the move_base node
-        self.move_base = subprocess.Popen([
-            'roslaunch',
-            os.path.join(helper_path, 'launch', 'move_base.launch'),
-            'base_global_planner:=' + base_global_planner,
-            'base_local_planner:=' + base_local_planner,
-            'remap_cmd_vel:=' + remap_cmd_vel
-        ])
+        # Get params from ROS parameter server
+        config_path = rospy.get_param('~config_path', None)
+
+        if config_path is None:
+            rospack = rospkg.RosPack()
+            base_path = rospack.get_path('lics')
+            config_path = os.path.join(base_path, 'config', 'config.yaml')
+        with open(config_path, 'r') as f:
+            config = yaml.load(f, Loader=yaml.FullLoader)['robot']
+
+        rospy.set_param('/use_sim_time', config['use_sim_time'])
 
         # Subscribers
-        rospy.Subscriber('/front/scan', LaserScan, self.update_laser, queue_size=1)
+        rospy.Subscriber(config['laser_topic'], LaserScan, self.update_laser, queue_size=1)
         rospy.Subscriber('/odometry/filtered', Odometry, self.update_state, queue_size=1)
         # rospy.Subscriber('/move_base/cmd_vel', Twist, self.get_lp_velocity, queue_size=1)
         rospy.Subscriber('/move_base/GlobalPlanner/plan', Path, self.update_path, queue_size=1)
@@ -68,23 +54,23 @@ class Robot:
         self.clear_costmap_srv = rospy.ServiceProxy('/move_base/clear_costmaps', Empty)
 
         # Parameters in float32
-        self.los = np.float32(los)
+        self.los = np.float32(config['los'])
         self.v_multiplier = np.float32(1.0)
-        self.max_v = np.float32(max_v)
-        self.min_v = np.float32(min_v)
-        self.max_w = np.float32(max_w)
-        self.min_w = np.float32(min_w)
-        self.laser_dist = np.float32(laser_clip)
-        self.threshold_dist = np.float32(threshold_dist)
-        self.threshold_v = np.float32(threshold_v)
-        self.min_inflation_radius = np.float32(min_inflation_radius)
-        self.max_inflation_radius = np.float32(max_inflation_radius)
-
-        self.base_local_planner = base_local_planner
+        self.max_v = np.float32(config['max_v'])
+        self.min_v = np.float32(config['min_v'])
+        self.max_w = np.float32(config['max_w'])
+        self.min_w = np.float32(config['min_w'])
+        self.laser_dist = np.float32(config['laser_clip'])
+        self.laser_scale = np.float32(config['laser_scale'])
+        self.threshold_dist = np.float32(config['threshold_dist'])
+        self.threshold_v = np.float32(config['threshold_v'])
+        self.min_inflation_radius = np.float32(config['min_inflation_radius'])
+        self.max_inflation_radius = np.float32(config['max_inflation_radius'])
 
         # Initial state in float32
         self.state = STATE_NORMAL
         self.inflated = False
+        self.interpolate_laser = config['interpolate_laser']
         self.odom = np.zeros((3,), dtype=np.float32)
         self.lp_vel = np.zeros((2,), dtype=np.float32)
         self.local_goal = np.zeros((2,), dtype=np.float32)
@@ -128,7 +114,24 @@ class Robot:
         self.v_multiplier = np.float32(1.0)
 
     def update_laser(self, msg):
-        self.laser[:] = np.clip(np.array(msg.ranges, dtype=np.float32), 0, self.laser_dist)
+        if self.interpolate_laser:
+            new_ranges = []
+            new_intensities = []
+
+            for i in range(len(msg.ranges)):
+                if i % 3 == 0:
+                    new_ranges.append(msg.ranges[i])
+                    new_intensities.append(msg.intensities[i])
+                new_ranges.append(msg.ranges[i])
+                new_intensities.append(msg.intensities[i])
+
+            msg.ranges = new_ranges
+            msg.intensities = new_intensities
+            msg.angle_increment *= 540 / 720
+
+        self.laser[:] = np.clip(np.array(msg.ranges, dtype=np.float32) * self.laser_scale, 0, self.laser_dist)
+        self.laser[self.laser == 0] = self.laser_dist
+
         min_dist_front = np.min(self.laser[253:467])
         if min_dist_front < self.threshold_dist:
             self.v_multiplier = min_dist_front / self.threshold_dist
@@ -162,15 +165,6 @@ class Robot:
         self.inflater_client.update_configuration({
             'inflation_radius': inflation_radius
         })
-
-    def set_goal(self, x, y, psi):
-        pose = PoseStamped()
-        pose.header.frame_id = 'odom'
-        pose.pose.position.x = x
-        pose.pose.position.y = y
-        pose.pose.orientation.z = np.sin(psi / 2)
-        pose.pose.orientation.w = np.cos(psi / 2)
-        self.goal_pub.publish(pose)
 
     def get_lp_velocity(self, msg):
         v = msg.linear.x / self.max_v

@@ -1,0 +1,24 @@
+gym:
+  world_idx: 59
+  gui: true
+  rviz: true
+  rate: 10
+  max_steps: 200
+
+robot:
+  use_sim_time: false
+  laser_topic: '/scan'
+  los: 1.0
+  interpolate_laser: true
+  laser_clip: 5.0
+  laser_scale: 2.0
+  threshold_dist: 0.0
+  threshold_v: 99999.0
+  max_v: 0.3
+  min_v: -0.3
+  max_w: 0.6
+  min_w: -0.6
+  max_inflation_radius: 0.5
+  min_inflation_radius: 0.15
+
+model_file: 'transformer_99.pth'

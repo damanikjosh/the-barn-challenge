@@ -1,0 +1,41 @@
+<launch>
+  <!-- Arguments -->
+  <!-- <arg name="map_file" default="$(find stella_navigation)/maps/map.yaml"/> -->
+  <arg name="open_rviz" default="true"/>
+  <arg name="configuration_basename" default="stella.lua"/>
+
+  <!-- STELLA -->
+  <include file="$(find stella_helper)/launch/stella_remote.launch">
+
+  </include>
+
+
+
+<!--   <node pkg="robot_localization" type="ekf_localization_node" name="ekf_localization"> -->
+<!--     <rosparam command="load" file="$(find stella_navigation)/config/robot_localization.yaml" /> -->
+<!--   </node> -->
+
+
+<!--    --><!-- Map server -->
+<!--   <node pkg="map_server" name="map_server" type="map_server" args="$(arg map_file)"/> -->
+
+<!--    --><!-- AMCL -->
+<!--   <include file="$(find stella_navigation)/launch/amcl.launch"/> -->
+
+<!--    --><!-- gmapping -->
+<!--   <include file="$(find stella_slam)/launch/stella_gmapping.launch"> -->
+<!--     <arg name="configuration_basename" value="$(arg configuration_basename)"/> -->
+<!--   </include> -->
+
+<!--   move_base -->
+  <include file="$(find stella_navigation)/launch/move_base.launch">
+    <arg name="cmd_vel_topic" value="move_base/cmd_vel" />
+    <arg name="odom_topic" value="odometry/filtered" />
+  </include>
+
+  <!-- rviz -->
+  <group if="$(arg open_rviz)"> 
+    <node pkg="rviz" type="rviz" name="rviz" required="true"
+          args="-d $(find stella_navigation)/rviz/stella_navigation_2.rviz"/>
+  </group>
+</launch>

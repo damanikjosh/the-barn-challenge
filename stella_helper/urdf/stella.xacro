@@ -1,0 +1,60 @@
+<?xml version="1.0" ?>
+<robot name="stella" xmlns:xacro="http://ros.org/wiki/xacro">
+  <xacro:property name="PI" value="3.1415926535897931"/>
+  <xacro:property name="bodyHeight" value="0.164"/>
+  <xacro:property name="bodyLength" value="0.18"/>
+  <xacro:property name="bodyWidth" value="0.209"/>
+  <xacro:property name="bodyMass" value="1.47"/>
+  
+  <xacro:include filename="$(find stella_helper)/urdf/materials.xacro"/>
+
+  <link name="base_footprint"/>
+
+  <joint name="base_joint" type="fixed">
+    <parent link="base_footprint"/>
+    <child link="base_link" />
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+
+  <link name="base_link">
+    <visual>
+      <origin xyz="0 0 ${bodyHeight/2}" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://stella_helper/meshes/bases/STELLA-N2.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="grey"/>
+    </visual>
+
+    <collision>
+      <origin xyz="0 0 ${bodyHeight/2}" rpy="0 0 0"/>
+      <geometry>
+        <box size="${bodyLength} ${bodyWidth} ${bodyHeight}"/>
+      </geometry>
+    </collision>
+    
+    <inertial>
+      <origin xyz="0 0 ${bodyHeight/2}" rpy="0 0 0"/>
+      <mass value="${bodyMass}"/>
+      <inertia ixx="${bodyMass*(bodyLength*bodyLength+bodyHeight*bodyHeight)/12}" ixy="0" ixz="0"
+               iyy="${bodyMass*(bodyLength*bodyLength+bodyWidth*bodyWidth)/12}" iyz="0"
+               izz="${bodyMass*(bodyWidth*bodyWidth+bodyHeight*bodyHeight)/12}" />
+    </inertial>
+  </link>
+
+  <joint name="imu_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="imu_link"/>
+    <origin xyz="${-bodyLength/2 + 0.025} 0 0.067" rpy="0 0 0"/>
+  </joint>
+
+  <link name="imu_link"/>
+
+  <joint name="scan_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="base_scan"/>
+    <origin xyz="${bodyLength/2 - 0.035} 0 ${bodyHeight - 0.008}" rpy="0 0 ${PI}"/>
+  </joint>
+
+  <link name="base_scan" />
+
+</robot>

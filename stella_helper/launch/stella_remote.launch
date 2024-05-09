@@ -1,0 +1,13 @@
+<launch>
+  <include file="$(find stella_helper)/launch/includes/description.launch.xml">
+  </include>
+  <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher">
+    <param name="publish_frequency" type="double" value="50.0" />
+    <param name="tf_prefix" value=""/>
+  </node>
+  <node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_state_publisher"></node>
+  <!-- Node laser_interpolation.py -->
+<!--   <node pkg="stella_helper" type="laser_interpolation.py" name="laser_interpolation" output="screen"> -->
+<!--   </node> -->
+</launch>
+

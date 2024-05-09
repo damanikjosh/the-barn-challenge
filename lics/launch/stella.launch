@@ -1,0 +1,30 @@
+<launch>
+  <!-- Goal position -->
+  <arg name="goal_x" default="4" />
+  <arg name="goal_y" default="0" />
+
+  <!-- Goal orientation -->
+  <arg name="goal_z" default="0" />
+  <arg name="goal_w" default="1" />
+
+  <include file="$(find stella_helper)/launch/stella_remote.launch" />
+
+  <!-- Run hector_mapping -->
+  <include file="$(find stella_helper)/launch/hector_mapping.launch" />
+
+  <!-- Run move_base -->
+  <include file="$(find stella_helper)/launch/move_base.launch" />
+
+  <node pkg="rviz" type="rviz" name="rviz" args="-d $(find jackal_helper)/rviz/localization.rviz" />
+
+  <!-- Run run.py on pkg lics inside folder script -->
+  <node pkg="lics" type="run.py" name="lics" output="screen">
+    <param name="laser_scale" value="2.0" />
+    <param name="control_freq" value="10" />
+    <param name="interpolate_laser" value="true" />
+    <param name="config_path" value="$(find lics)/config/stella.yaml" />
+  </node>
+
+
+  <node pkg="rostopic" type="rostopic" name="published_goal" args='pub -r 10 /move_base_simple/goal geometry_msgs/PoseStamped "{header: {stamp: now, frame_id: "map"}, pose: {position: {x: $(arg goal_x), y: $(arg goal_y), z: 0.0}, orientation: {z: $(arg goal_z), w: $(arg goal_w)}}}"' />
+</launch>
