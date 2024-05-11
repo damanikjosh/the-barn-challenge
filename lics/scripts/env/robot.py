@@ -10,10 +10,11 @@ from scipy.spatial.transform import Rotation as R
 
 from std_srvs.srv import Empty
 from sensor_msgs.msg import LaserScan
-from nav_msgs.msg import Odometry, Path
+from nav_msgs.msg import Odometry, Path, OccupancyGrid
 from robot_localization.srv import SetPose
 from geometry_msgs.msg import Twist, PoseStamped, PoseWithCovarianceStamped
 
+from .safety_check import SafetyCheck
 
 STATE_NORMAL = 0
 STATE_WAIT = 1
@@ -41,11 +42,14 @@ class Robot:
 
         rospy.set_param('/use_sim_time', config['use_sim_time'])
 
+        self.safety_check = SafetyCheck(laser_clip=config['laser_clip'])
+
         # Subscribers
         rospy.Subscriber(config['laser_topic'], LaserScan, self.update_laser, queue_size=1)
         rospy.Subscriber('/odometry/filtered', Odometry, self.update_state, queue_size=1)
         # rospy.Subscriber('/move_base/cmd_vel', Twist, self.get_lp_velocity, queue_size=1)
         rospy.Subscriber('/move_base/GlobalPlanner/plan', Path, self.update_path, queue_size=1)
+        rospy.Subscriber('/move_base/local_costmap/costmap', OccupancyGrid, self.update_local_costmap, queue_size=1)
 
         # Publishers and service proxies
         self.vel_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=1)
@@ -71,7 +75,7 @@ class Robot:
         self.state = STATE_NORMAL
         self.inflated = False
         self.interpolate_laser = config['interpolate_laser']
-        self.odom = np.zeros((3,), dtype=np.float32)
+        self.odom = np.zeros((5,), dtype=np.float32)
         self.lp_vel = np.zeros((2,), dtype=np.float32)
         self.local_goal = np.zeros((2,), dtype=np.float32)
         self.global_path = np.zeros((0, 2), dtype=np.float32)
@@ -84,7 +88,7 @@ class Robot:
         pose = msg.pose.pose
         twist = msg.twist.twist
         r = R.from_quat([pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w])
-        self.odom[:] = (pose.position.x, pose.position.y, r.as_euler('zyx')[0])
+        self.odom[:] = (pose.position.x, pose.position.y, r.as_euler('zyx')[0], twist.linear.x, twist.angular.z)
 
         v = twist.linear.x / self.max_v
         if self.inflater_client is not None:
@@ -107,7 +111,7 @@ class Robot:
             y_hat = savgol_filter(y, 19, 3).astype(np.float32)
         except ValueError:
             x_hat, y_hat = x, y
-        self.global_path = self.transform_path(np.stack([x_hat, y_hat], axis=-1), *self.odom)
+        self.global_path = self.transform_path(np.stack([x_hat, y_hat], axis=-1), *self.odom[:3])
         self.local_goal = self.get_local_goal(self.global_path)
 
         # Reset the velocity multiplier if the global path is not empty
@@ -132,11 +136,16 @@ class Robot:
         self.laser[:] = np.clip(np.array(msg.ranges, dtype=np.float32) * self.laser_scale, 0, self.laser_dist)
         self.laser[self.laser == 0] = self.laser_dist
 
-        min_dist_front = np.min(self.laser[253:467])
+        self.safety_check.update_laser(msg)
+        # min_dist_front = np.min(self.laser[253:467])
+        min_dist_front = np.min(self.laser)
         if min_dist_front < self.threshold_dist:
             self.v_multiplier = min_dist_front / self.threshold_dist
         else:
             self.v_multiplier = np.float32(1.0)
+
+    def update_local_costmap(self, msg):
+        self.safety_check.update_local_costmap(msg, self.odom[:3])
 
     def get_local_goal(self, gp):
         local_goal = np.zeros(2, dtype=np.float32)
@@ -192,7 +201,7 @@ class Robot:
         self.pose_srv(reset_pose)
 
         self.clear_costmap()  # Clear the costmap
-        self.odom[:] = (0, 0, 0)  # Reset the state
+        self.odom[:] = (0, 0, 0, 0, 0)  # Reset the state
 
     @staticmethod
     def transform_path(gp, x, y, psi):

@@ -4,6 +4,7 @@ import torch
 import rospy
 import rospkg
 import easydict
+import numpy as np
 
 from env import Robot
 from models import Transformer
@@ -61,6 +62,45 @@ if __name__ == '__main__':
             action, _, _ = model(obs, local_goal)
 
         action = action.squeeze().cpu().numpy()
-        print(f'Odom: {robot.odom}, Action: {action}')
+
+        odom_safe, odom_dt, odom_min_point, odom_safety_type = robot.safety_check(robot.odom[3], robot.odom[4])
+        model_safe, model_dt, model_min_point, _ = robot.safety_check(action[0] * robot.max_v, action[1] * robot.max_w)
+
+        # Angle between action and local goal
+        angle = np.arccos(np.dot(action, robot.local_goal) / (np.linalg.norm(action) * np.linalg.norm(robot.local_goal)))
+
+        if abs(action[0]) >= 0.3 and model_dt > 0.25:# and
+            print(f'Model is safe. Time to collision: {model_dt}. Action: {action}')
+            pass
+        else:
+            if odom_dt < 0.25: # If robot movement is unsafe
+                if odom_safety_type == 0:
+                    min_point = odom_min_point or model_min_point
+
+                    print(f'Safety type 0 alert. Moving backwards. Time to collision: {odom_dt}', end='. ')
+                    if (min_point[0] > 0 and min_point[1] > 0) or \
+                            (min_point[0] < 0 and min_point[1] < 0):
+                        if min_point[0] > 0:
+                            action = [-0.3, -0.5]
+                            print('Case 3')
+                        else:
+                            action = [0.3, 0]
+                            print('Case 4')
+                    else:
+                        if min_point[0] > 0:
+                            action = [-0.3, 0.5]
+                            print('Case 1')
+                        else:
+                            action = [0.3, 0]
+                            print('Case 2')
+                else:
+                    direction = robot.local_goal / abs(robot.local_goal)
+                    action = [-0.3, 0.5 * direction[1]]
+                    print(f'Other safety type alert. Rotating in place: {action}')
+            else:
+                print(f'Model is safe. Time to collision: {model_dt}. Action: {action}')
+                pass
+
+
         robot.set_velocity(action[0], action[1])
         rate.sleep()

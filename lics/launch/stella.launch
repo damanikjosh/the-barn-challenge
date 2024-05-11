@@ -19,9 +19,7 @@
 
   <!-- Run run.py on pkg lics inside folder script -->
   <node pkg="lics" type="run.py" name="lics" output="screen">
-    <param name="laser_scale" value="2.0" />
-    <param name="control_freq" value="10" />
-    <param name="interpolate_laser" value="true" />
+    <param name="control_freq" value="20" />
     <param name="config_path" value="$(find lics)/config/stella.yaml" />
   </node>
 
