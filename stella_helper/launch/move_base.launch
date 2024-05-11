@@ -1,11 +1,12 @@
 <launch>
   <!-- Arguments -->
-  <arg name="cmd_vel_topic" default="movebase/cmd_vel" />
+  <arg name="cmd_vel_topic" default="move_base/cmd_vel" />
   <arg name="odom_topic" default="odometry/filtered" />
 
   <!-- move_base -->
   <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
     <param name="base_global_planner" value="global_planner/GlobalPlanner" />
+<!--     <param name="base_local_planner" value="base_local_planner/TrajectoryPlannerROS" /> -->
     <param name="base_local_planner" value="eband_local_planner/EBandPlannerROS" />
     <rosparam file="$(find stella_helper)/param/costmap_common_params_stella.yaml" command="load" ns="global_costmap" />
     <rosparam file="$(find stella_helper)/param/costmap_common_params_stella.yaml" command="load" ns="local_costmap" />
@@ -15,7 +16,7 @@
 <!--     <rosparam file="$(find stella_helper)/param/base_local_planner_params.yaml" command="load" /> -->
     <rosparam file="$(find stella_helper)/param/global_planner_params.yaml" command="load" />
     <rosparam file="$(find stella_helper)/param/eband_local_planner_params.yaml" command="load" />
-    <remap from="cmd_vel" to="$(arg cmd_vel_topic)"/>
+<!--     <remap from="cmd_vel" to="$(arg cmd_vel_topic)"/> -->
     <remap from="odom" to="$(arg odom_topic)"/>
   </node>
 </launch>

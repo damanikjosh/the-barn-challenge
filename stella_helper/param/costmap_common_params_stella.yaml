@@ -11,7 +11,7 @@ transform_tolerance: 0.5
 meter_scoring: true
 
 footprint: [[-0.104, -0.085], [-0.104, 0.085], [0.104, 0.085], [0.104, -0.085]]
-footprint_padding: 0.05
+footprint_padding: 0.1
 
 plugins:
 - {name: obstacles_layer, type: "costmap_2d::ObstacleLayer"}
@@ -23,4 +23,3 @@ obstacles_layer:
 
 inflater_layer:
  inflation_radius: 0.15
- cost_scaling_factor: 5.0
