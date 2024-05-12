@@ -8,16 +8,16 @@ gym:
 robot:
   use_sim_time: true
   laser_topic: '/front/scan'
-  los: 2.0
+  los: 1.0
   interpolate_laser: false
   laser_clip: 5.0
   laser_scale: 1.0
-  threshold_dist: 2.5
-  threshold_v: 0.0
-  max_v: 1.5
-  min_v: -0.5
-  max_w: 1.5
-  min_w: -1.5
+  threshold_dist: 0.0
+  threshold_v: 9999.0
+  max_v: 0.5
+  min_v: -0.25
+  max_w: 0.5
+  min_w: -0.5
   max_inflation_radius: 1.0
   min_inflation_radius: 0.3
 

@@ -1,6 +1,6 @@
 shutdown_costmaps: false
 
-controller_frequency: 20.0
+controller_frequency: 1.0
 controller_patience: 100000.0
 
 planner_frequency: 20.0

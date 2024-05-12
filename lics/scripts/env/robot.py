@@ -17,7 +17,7 @@ from geometry_msgs.msg import Twist, PoseStamped, PoseWithCovarianceStamped
 from .safety_check import SafetyCheck
 
 STATE_NORMAL = 0
-STATE_WAIT = 1
+STATE_RECOVERY = 1
 
 
 class Robot:
@@ -47,7 +47,7 @@ class Robot:
         # Subscribers
         rospy.Subscriber(config['laser_topic'], LaserScan, self.update_laser, queue_size=1)
         rospy.Subscriber('/odometry/filtered', Odometry, self.update_state, queue_size=1)
-        # rospy.Subscriber('/move_base/cmd_vel', Twist, self.get_lp_velocity, queue_size=1)
+        rospy.Subscriber('/move_base/cmd_vel', Twist, self.get_lp_velocity, queue_size=1)
         rospy.Subscriber('/move_base/GlobalPlanner/plan', Path, self.update_path, queue_size=1)
         rospy.Subscriber('/move_base/local_costmap/costmap', OccupancyGrid, self.update_local_costmap, queue_size=1)
 
@@ -81,8 +81,10 @@ class Robot:
         self.global_path = np.zeros((0, 2), dtype=np.float32)
         self.laser = np.full((720,), self.laser_dist, dtype=np.float32)
 
+        self.last_success_time = rospy.Time.now()
+
         self.reset()
-        self.inflater_client = Client('/move_base/global_costmap/inflater_layer')
+        self.inflater_client = Client('/move_base/local_costmap/inflater_layer')
 
     def update_state(self, msg):
         pose = msg.pose.pose
@@ -137,8 +139,8 @@ class Robot:
         self.laser[self.laser == 0] = self.laser_dist
 
         self.safety_check.update_laser(msg)
-        # min_dist_front = np.min(self.laser[253:467])
-        min_dist_front = np.min(self.laser)
+        min_dist_front = np.min(self.laser[253:467])
+        # min_dist_front = np.min(self.laser)
         if min_dist_front < self.threshold_dist:
             self.v_multiplier = min_dist_front / self.threshold_dist
         else:
@@ -164,11 +166,67 @@ class Robot:
 
     def set_velocity(self, v, w):
         # Scale the velocity to the maximum and minimum values and clip
+        v = np.clip(v * self.max_v * self.v_multiplier, self.min_v, self.max_v)
+        w = np.clip(w * self.max_w, self.min_w, self.max_w)
+
+        _, dt, _, _ = self.safety_check(v, w)
+        if dt < 1.0:
+            v_list = [0.3, 0.3, 0.3]
+            w_list = [0, self.max_w, -self.max_w]
+            dt_list = [0, 0, 0]
+            for i in range(len(v_list)):
+                _, dt_list[i], _, _ = self.safety_check(v_list[i], w_list[i])
+
+            max_dt_idx = np.argmax(dt_list)
+            if dt_list[max_dt_idx] >= 1.0:
+                v = v_list[max_dt_idx]
+                w = w_list[max_dt_idx]
+                dt = dt_list[max_dt_idx]
+
         if self.state == STATE_NORMAL:
-            twist = Twist()
-            twist.linear.x = np.clip(v * self.max_v * self.v_multiplier, self.min_v, self.max_v)
-            twist.angular.z = np.clip(w * self.max_w, self.min_w, self.max_w)
-            self.vel_pub.publish(twist)
+            if dt >= 1.0:
+                self.last_success_time = rospy.Time.now()
+            elif dt >= 0.5:
+                v = 0.5 * v
+                w = w
+            else:
+                v = 0
+                w = 0
+                print(f'Collision is imminent. Time to collision: {dt}. Action: {v}, {w}')
+                if rospy.Time.now() - self.last_success_time > rospy.Duration(1):
+                    print('Entering recovery mode')
+                    self.state = STATE_RECOVERY
+        elif self.state == STATE_RECOVERY:
+            if dt >= 2.0:
+                self.state = STATE_NORMAL
+                print('Exiting recovery mode')
+            else:
+                v_list = [-0.15, -0.15, -0.15]
+                w_list = [0, 0.5*self.max_w, -0.5*self.max_w]
+                dt_list = [0, 0, 0]
+                for i in range(len(v_list)):
+                    _, dt_list[i], _, _ = self.safety_check(v_list[i], w_list[i])
+
+                max_dt_idx = np.argmax(dt_list)
+                if dt_list[max_dt_idx] >= 1.0:
+                    v = v_list[max_dt_idx]
+                    w = w_list[max_dt_idx]
+                    dt = dt_list[max_dt_idx]
+                elif dt_list[max_dt_idx] >= 0.5:
+                    v = 0.5 * v_list[max_dt_idx]
+                    w = 0.5 * w_list[max_dt_idx]
+                else:
+                    v = 0
+                    w = 0
+                    print(f'Collision is imminent. Time to collision: {dt}. Action: {v}, {w}')
+
+
+
+
+        twist = Twist()
+        twist.linear.x = v
+        twist.angular.z = w
+        self.vel_pub.publish(twist)
 
     def set_inflation_radius(self, inflation_radius):
         self.inflater_client.update_configuration({

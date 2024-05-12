@@ -1,5 +1,5 @@
 import numpy as np
-
+from numba import jit
 import laser_geometry.laser_geometry as lg
 import sensor_msgs.point_cloud2 as pc2
 
@@ -29,6 +29,76 @@ def transform_points(points, x, y, psi):
     return pr[:2].T
 
 
+@jit(nopython=True)
+def safety_check_rotation(points, laser_offset, safe_radius):
+    min_dist = np.inf
+    min_point = None
+
+    for x, y in points:
+        x = x + laser_offset
+        dist = np.sqrt(x ** 2 + y ** 2)
+        if dist < safe_radius:
+            min_dist = min(min_dist, dist)
+            if min_dist == dist:
+                min_point = (x, y)
+
+    return False, min_dist / 10, min_point, 0
+
+
+@jit(nopython=True)
+def safety_check_linear(points, v, laser_offset, width, padding, laser_clip):
+    unsafe_zone = False
+    min_dist = np.inf
+    min_point = None
+
+    for x, y in points:
+        x = x + laser_offset
+        if v * x < 0:
+            continue
+        dist = np.sqrt(x ** 2 + y ** 2)
+        if dist < laser_clip and abs(y) < (width / 2 + padding):
+            unsafe_zone = True
+            min_dist = min(min_dist, dist)
+            if min_dist == dist:
+                min_point = (x, y)
+
+    safe = not unsafe_zone
+    dt = min_dist / abs(v)
+    return safe, dt, min_point, 1
+
+
+@jit(nopython=True)
+def safety_check_radial(points, v, w, laser_offset, width, padding, laser_clip):
+    # w positive: turning left, w negative: turning right
+    turning_radius = v / w
+
+    outer_radius = abs(turning_radius) + width / 2 + padding
+    inner_radius = max(0, abs(turning_radius) - width / 2 - padding)
+
+    unsafe_zone = False
+    min_angle = np.inf
+    min_point = None
+
+    for x, y in points:
+        x = x + laser_offset
+        if v * x < 0:
+            continue
+        dist = np.sqrt(x ** 2 + y ** 2)
+        circle_dist = np.sqrt(x ** 2 + (y - turning_radius) ** 2)
+        if dist < laser_clip and inner_radius < circle_dist < outer_radius:
+            unsafe_zone = True
+            gamma = np.arctan2(y - turning_radius, x)
+            gamma_0 = np.arctan2(-turning_radius, 0)
+            angle_dist = np.abs(gamma - gamma_0)
+            min_angle = min(min_angle, angle_dist)
+            if min_angle == angle_dist:
+                min_point = (x, y)
+
+    safe = not unsafe_zone
+    dt = min_angle / abs(w)
+    return safe, dt, min_point, 2
+
+
 class SafetyCheck:
     """
     A class for performing safety checks for a mobile robot or autonomous vehicle using sensor data.
@@ -44,8 +114,8 @@ class SafetyCheck:
         safety_check_radial(angles, dist, v, w): Checks for safety in a radial (turning) motion context.
     """
 
-    # def __init__(self, length=0.508, width=0.43, padding=0.1, laser_offset=0.025, laser_clip=2.0, use_costmap=True):
-    def __init__(self, length=0.18, width=0.204, padding=0.03, laser_offset=0.025, laser_clip=2.0, use_costmap=True):
+    def __init__(self, length=0.508, width=0.43, padding=0.03, laser_offset=0.025, laser_clip=2.0, use_costmap=True):
+        # def __init__(self, length=0.18, width=0.204, padding=0.03, laser_offset=0.025, laser_clip=2.0, use_costmap=True):
         """
         Initializes the SafetyCheck with specified vehicle parameters.
 
@@ -72,9 +142,15 @@ class SafetyCheck:
     def __call__(self, v, w):
         # Combine the laser and costmap points
         if self.use_costmap:
-            points = np.concatenate([self.laser_points, self.costmap_points])
+            try:
+                points = np.concatenate([self.laser_points, self.costmap_points])
+            except ValueError:
+                points = self.laser_points
         else:
             points = self.laser_points
+
+        if len(points) == 0:
+            return False, np.inf, None, 1
 
         # Visualize the points
         # plt.figure()
@@ -86,16 +162,18 @@ class SafetyCheck:
         # plt.gca().set_aspect('equal', adjustable='box')
         # plt.pause(0.001)
 
-        if abs(v) < 0.1:
-            # Safety type 0: Rotating in place
-            return self.safety_check_rotation(points)
+        # if abs(v) < 0.3 and abs(w) >= 0.1:
+        #     # Safety type 0: Rotating in place
+        #     result = safety_check_rotation(points, self.laser_offset, self.safe_radius)
+        #     if not result[0]:
+        #         return result
 
         if abs(w) < 0.01:
             # Safety type 1: Linear motion
-            return self.safety_check_linear(points, v)
+            return safety_check_linear(points, v, self.laser_offset, self.width, self.padding, self.laser_clip)
         else:
             # Safety type 2: Radial motion
-            return self.safety_check_radial(points, v, w)
+            return safety_check_radial(points, v, w, self.laser_offset, self.width, self.padding, self.laser_clip)
 
     def update_laser(self, msg):
         pc2_msg = self.lp.projectLaser(msg)
@@ -117,71 +195,7 @@ class SafetyCheck:
         points = transform_points(points, *odom)
 
         # Update the costmap points only when x is negative
-        self.costmap_points = points
-
-    def safety_check_rotation(self, points):
-        min_dist = np.inf
-        min_point = None
-
-        for x, y in points:
-            x = x + self.laser_offset
-            dist = np.sqrt(x ** 2 + y ** 2)
-            if dist < self.safe_radius + self.padding:
-                min_dist = min(min_dist, dist)
-                if min_dist == dist:
-                    min_point = (x, y)
-
-        return False, min_dist / 10, min_point, 0
-
-    def safety_check_linear(self, points, v):
-        unsafe_zone = False
-        min_dist = np.inf
-        min_point = None
-
-        for x, y in points:
-            x = x + self.laser_offset
-            if v * x < 0:
-                continue
-            dist = np.sqrt(x ** 2 + y ** 2)
-            if dist < self.laser_clip and abs(y) < (self.width / 2 + self.padding):
-                unsafe_zone = True
-                min_dist = min(min_dist, dist)
-                if min_dist == dist:
-                    min_point = (x, y)
-
-        safe = not unsafe_zone
-        dt = min_dist / abs(v)
-        return safe, dt, min_point, 1
-
-    def safety_check_radial(self, points, v, w):
-        # w positive: turning left, w negative: turning right
-        turning_radius = v / w
-
-        outer_radius = abs(turning_radius) + self.width / 2 + self.padding
-        inner_radius = max(0, abs(turning_radius) - self.width / 2 - self.padding)
-
-        unsafe_zone = False
-        min_angle = np.inf
-        min_point = None
-
-        for x, y in points:
-            x = x + self.laser_offset
-            if v * x < 0:
-                continue
-            dist = np.sqrt(x ** 2 + y ** 2)
-            circle_dist = np.sqrt(x ** 2 + (y - turning_radius) ** 2)
-            if dist < self.laser_clip and inner_radius < circle_dist < outer_radius:
-                unsafe_zone = True
-                gamma = np.arctan2(y - turning_radius, x)
-                gamma_0 = np.arctan2(-turning_radius, 0)
-                angle_dist = np.abs(gamma - gamma_0)
-                min_angle = min(min_angle, angle_dist)
-                if min_angle == angle_dist:
-                    min_point = (x, y)
-
-        safe = not unsafe_zone
-        dt = min_angle / abs(w)
-        return safe, dt, min_point, 2
+        self.costmap_points = points[points[:, 0] < 0]
 
     # def back_linear_check(self, v, costmap, psi):
     #     unsafe_zone = False
