@@ -120,20 +120,21 @@ class Robot:
         self.v_multiplier = np.float32(1.0)
 
     def update_laser(self, msg):
+        # print(len(msg.ranges))
         if self.interpolate_laser:
             new_ranges = []
             new_intensities = []
 
-            for i in range(len(msg.ranges)):
-                if i % 3 == 0:
+            for i in range(len(msg.ranges)-1):
+                if i % 3 < 2:
                     new_ranges.append(msg.ranges[i])
                     new_intensities.append(msg.intensities[i])
-                new_ranges.append(msg.ranges[i])
-                new_intensities.append(msg.intensities[i])
+                # new_ranges.append(msg.ranges[i])
+                # new_intensities.append(msg.intensities[i])
 
             msg.ranges = new_ranges
             msg.intensities = new_intensities
-            msg.angle_increment *= 540 / 720
+            msg.angle_increment *= 1081 / 720
 
         self.laser[:] = np.clip(np.array(msg.ranges, dtype=np.float32) * self.laser_scale, 0, self.laser_dist)
         self.laser[self.laser == 0] = self.laser_dist
@@ -171,7 +172,7 @@ class Robot:
 
         _, dt, _, _ = self.safety_check(v, w)
         if dt < 1.0:
-            v_list = [0.3, 0.3, 0.3]
+            v_list = [0.5 * self.max_v] * 3
             w_list = [0, self.max_w, -self.max_w]
             dt_list = [0, 0, 0]
             for i in range(len(v_list)):
@@ -187,8 +188,8 @@ class Robot:
             if dt >= 1.0:
                 self.last_success_time = rospy.Time.now()
             elif dt >= 0.5:
-                v = 0.5 * v
-                w = w
+                v = dt * v
+                w = dt * w
             else:
                 v = 0
                 w = 0
@@ -201,7 +202,7 @@ class Robot:
                 self.state = STATE_NORMAL
                 print('Exiting recovery mode')
             else:
-                v_list = [-0.15, -0.15, -0.15]
+                v_list = [0.5 * self.min_v] * 2
                 w_list = [0, 0.5*self.max_w, -0.5*self.max_w]
                 dt_list = [0, 0, 0]
                 for i in range(len(v_list)):
@@ -219,9 +220,6 @@ class Robot:
                     v = 0
                     w = 0
                     print(f'Collision is imminent. Time to collision: {dt}. Action: {v}, {w}')
-
-
-
 
         twist = Twist()
         twist.linear.x = v

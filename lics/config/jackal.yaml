@@ -6,18 +6,18 @@ gym:
   max_steps: 200
 
 robot:
-  use_sim_time: true
+  use_sim_time: false
   laser_topic: '/front/scan'
   los: 1.0
-  interpolate_laser: false
+  interpolate_laser: true
   laser_clip: 5.0
   laser_scale: 1.0
   threshold_dist: 0.0
   threshold_v: 9999.0
   max_v: 0.5
   min_v: -0.25
-  max_w: 0.5
-  min_w: -0.5
+  max_w: 1.0
+  min_w: -1.0
   max_inflation_radius: 1.0
   min_inflation_radius: 0.3
 

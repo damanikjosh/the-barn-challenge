@@ -3,10 +3,10 @@ from numba import jit
 import laser_geometry.laser_geometry as lg
 import sensor_msgs.point_cloud2 as pc2
 
-import matplotlib
-import matplotlib.pyplot as plt
+# import matplotlib
+# import matplotlib.pyplot as plt
 
-matplotlib.use('TkAgg')
+#matplotlib.use('TkAgg')
 
 # Costmap
 COSTMAP_RESOLUTION = 0.05
@@ -114,7 +114,7 @@ class SafetyCheck:
         safety_check_radial(angles, dist, v, w): Checks for safety in a radial (turning) motion context.
     """
 
-    def __init__(self, length=0.508, width=0.43, padding=0.03, laser_offset=0.025, laser_clip=2.0, use_costmap=True):
+    def __init__(self, length=0.52, width=0.427, padding=0.03, laser_offset=0.046, laser_clip=2.0, use_costmap=True):
         # def __init__(self, length=0.18, width=0.204, padding=0.03, laser_offset=0.025, laser_clip=2.0, use_costmap=True):
         """
         Initializes the SafetyCheck with specified vehicle parameters.

@@ -43,7 +43,7 @@ if __name__ == "__main__":
     
     if args.world_idx < 300:  # static environment from 0-299
         world_name = "BARN/world_%d.world" %(args.world_idx)
-        INIT_POSITION = [-2.25, 3, 0]  # in world frame
+        INIT_POSITION = [-2.25, 3, 1.57]  # in world frame
         GOAL_POSITION = [0, 10]  # relative to the initial position
     elif args.world_idx < 360:  # Dynamic environment from 300-359
         world_name = "DynaBARN/world_%d.world" %(args.world_idx - 300)
@@ -51,8 +51,10 @@ if __name__ == "__main__":
         GOAL_POSITION = [-20, 0]  # relative to the initial position
     elif args.world_idx < 400:
         world_name = "Final/world_%d.world" %(args.world_idx - 360)
-        INIT_POSITION = [-0.182145, -0.55624, 3.14]  # in world frame
-        GOAL_POSITION = [-10, 0]  # relative to the initial position
+        INIT_POSITION = [-0.182145, -0.55624, 1.57]  # in world frame
+        GOAL_POSITION = [-10, 0]
+        # INIT_POSITION = [0, 0, 0]  # in world frame
+        # GOAL_POSITION = [7, 0]  # relative to the initial position
     else:
         raise ValueError("World index %d does not exist" %args.world_idx)
     
