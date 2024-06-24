@@ -1,17 +1,24 @@
 <p align="center">
-  <img width = "100%" src='res/BARN_Challenge.png' />
+  <img width = "100%" src='res/diagram.jpg' />
   </p>
 
 --------------------------------------------------------------------------------
 
-# ICRA BARN Navigation Challenge
+# LiCS-KI @BARN-Challenge-2024
+
+A submission of LiCS-KI for the BARN Challenge 2024.
+
+* 📚 Paper: [LiCS: Learned-imitation on Cluttered Space](https://arxiv.org/abs/2406.14947)
+* ▶️ Videos: [[Practice Session]](https://www.youtube.com/shorts/izjfrVN-3tc) [[Track 1]](https://www.youtube.com/shorts/n4S0fFq_jJc) [[Track 2]](https://www.youtube.com/shorts/HFewc8KsLjI)
 
 ## Updates:
-* 02/04/2024: Adding 60 [DynaBARN](https://github.com/aninair1905/DynaBARN) environments. DynaBARN environments can be accessed by world indexes from 300-359.
+* 08/05/2024: LiCS-KI won first place in simulation competition! 🙌
+* 16/05/2024: LiCS-KI won first place in real-world competition! 🎉
+* 24/06/2024: Our preprint 📚 is now available on arXiv [[Link]](https://arxiv.org/abs/2406.14947)
 
 ## Requirements
 If you run it on a local machine without containers:
-* ROS version at least Kinetic
+* ROS version at least Melodic
 * CMake version at least 3.0.2
 * Python version at least 3.6
 * Python packages: defusedxml, rospkg, netifaces, numpy
@@ -45,7 +52,7 @@ cd /<YOUR_HOME_DIR>/jackal_ws/src
 
 4. Clone this repo and required ros packages: (replace `<YOUR_ROS_VERSION>` with your own, e.g. melodic)
 ```
-git clone https://github.com/Daffan/the-barn-challenge.git
+git clone https://github.com/damanikjosh/the-barn-challenge.git
 git clone https://github.com/jackal/jackal.git --branch <YOUR_ROS_VERSION>-devel
 git clone https://github.com/jackal/jackal_simulator.git --branch <YOUR_ROS_VERSION>-devel
 git clone https://github.com/jackal/jackal_desktop.git --branch <YOUR_ROS_VERSION>-devel
@@ -58,6 +65,7 @@ cd ..
 source /opt/ros/<YOUR_ROS_VERSION>/setup.bash
 rosdep init; rosdep update
 rosdep install -y --from-paths . --ignore-src --rosdistro=<YOUR_ROS_VERSION>
+pip3 install -r src/the-barn-challenge/lics/requirements.txt
 ```
 
 6. Build the workspace (if `catkin_make` fails, try changing `-std=c++11` to `-std=c++17` in `jackal_helper/CMakeLists.txt` line 3)
@@ -72,7 +80,7 @@ Follow the instruction below to run simulations in Singularity containers.
 
 2. Clone this repo
 ```
-git clone https://github.com/Daffan/the-barn-challenge.git
+git clone https://github.com/damanikjosh/the-barn-challenge.git
 cd the-barn-challenge
 ```
 
@@ -120,6 +128,3 @@ You should see the report as this:
 >Avg Time: 33.4715, Avg Metric: 0.1693, Avg Success: 0.8800, Avg Collision: 0.0480, Avg Timeout: 0.0720
 
 Except for `DWA`, we also provide three learning-based navigation stack as examples (see branch `LfH`, `applr` and `e2e`).
-
-## Submission
-Submit a link that downloads your customized repository to this [Google form](https://docs.google.com/forms/d/e/1FAIpQLSfZLMVluXE-HWnV9lNP00LuBi3e9HFOeLi30p9tsHUViWpqrA/viewform). Your navigation stack will be tested in the Singularity container on 50 hold-out BARN worlds sampled from the same distribution as the 300 BARN worlds. In the repository, make sure the `run.py` runs your navigation stack and `Singularityfile.def` installs all the dependencies of your repo. We suggest to actually build an image and test it with `./singularity_run.sh /path/to/image/file python3 run.py --world_idx 0`. You can also refer to branch `LfH`, `applr` and `e2e`, which are in the correct form for submissions.
