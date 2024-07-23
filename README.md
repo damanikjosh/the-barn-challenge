@@ -8,13 +8,17 @@
 
 A submission of LiCS-KI for the BARN Challenge 2024.
 
-* 📚 Paper: [LiCS: Learned-imitation on Cluttered Space](https://arxiv.org/abs/2406.14947)
+* 📚 Paper: [LiCS: Learned-imitation on Cluttered Space](https://damanikjosh.com/paper/2024/07/16/learned-imitation-in-cluttered-space/)
 * ▶️ Videos: [[Practice Session]](https://www.youtube.com/shorts/izjfrVN-3tc) [[Track 1]](https://www.youtube.com/shorts/n4S0fFq_jJc) [[Track 2]](https://www.youtube.com/shorts/HFewc8KsLjI)
+
+[![LiCS: Learned-imitation on Cluttered Space](https://img.youtube.com/vi/b2xXbj4M8x8/0.jpg)](https://www.youtube.com/watch?v=b2xXbj4M8x8)
+
 
 ## Updates:
 * 08/05/2024: LiCS-KI won first place in simulation competition! 🙌
 * 16/05/2024: LiCS-KI won first place in real-world competition! 🎉
 * 24/06/2024: Our preprint 📚 is now available on arXiv [[Link]](https://arxiv.org/abs/2406.14947)
+* 23/07/2024:  Our paper explanation video 🎥 is now available on Youtube [[Link]](https://www.youtube.com/watch?v=b2xXbj4M8x8)
 
 ## Requirements
 If you run it on a local machine without containers:
