@@ -8,7 +8,8 @@
 
 A submission of LiCS-KI for the BARN Challenge 2024.
 
-* 📚 Paper: [LiCS: Learned-imitation on Cluttered Space](https://damanikjosh.com/paper/2024/07/16/learned-imitation-in-cluttered-space/)
+* 📚 Paper: [LiCS: Learned-imitation on Cluttered Space](https://arxiv.org/abs/2406.14947/)
+* 🏠 Website: [https://damanikjosh.com/lics](https://damanikjosh.com/lics)
 * ▶️ Videos: [[Practice Session]](https://www.youtube.com/shorts/izjfrVN-3tc) [[Track 1]](https://www.youtube.com/shorts/n4S0fFq_jJc) [[Track 2]](https://www.youtube.com/shorts/HFewc8KsLjI)
 
 [![LiCS: Learned-imitation on Cluttered Space](https://img.youtube.com/vi/b2xXbj4M8x8/0.jpg)](https://www.youtube.com/watch?v=b2xXbj4M8x8)
