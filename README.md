@@ -1,3 +1,7 @@
+[**Update** Nov 20, 2024] Second version of preprint 📚 is now available on arXiv [[Link]](https://arxiv.org/abs/2406.14947)
+
+---
+
 <p align="center">
   <img width = "100%" src='res/diagram.jpg' />
   </p>
@@ -19,7 +23,8 @@ A submission of LiCS-KI for the BARN Challenge 2024.
 * 08/05/2024: LiCS-KI won first place in simulation competition! 🙌
 * 16/05/2024: LiCS-KI won first place in real-world competition! 🎉
 * 24/06/2024: Our preprint 📚 is now available on arXiv [[Link]](https://arxiv.org/abs/2406.14947)
-* 23/07/2024:  Our paper explanation video 🎥 is now available on Youtube [[Link]](https://www.youtube.com/watch?v=b2xXbj4M8x8)
+* 23/07/2024: Our paper explanation video 🎥 is now available on Youtube [[Link]](https://www.youtube.com/watch?v=b2xXbj4M8x8)
+* 20/11/2024: Second version of preprint 📚 is now available on arXiv [[Link]](https://arxiv.org/abs/2406.14947)
 
 ## Requirements
 If you run it on a local machine without containers:
