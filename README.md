@@ -1,4 +1,4 @@
-[**Update** Nov 20, 2024] Second version of preprint 📚 is now available on arXiv [[Link]](https://arxiv.org/abs/2406.14947)
+[**Update** Dec 23, 2024] Our paper 📚 is now published on IEEE Robotics and Automation Letters (RA-L) 🙌 [[Link]](https://ieeexplore.ieee.org/document/10804084)
 
 ---
 
@@ -12,7 +12,7 @@
 
 A submission of LiCS-KI for the BARN Challenge 2024.
 
-* 📚 Paper: [LiCS: Learned-imitation on Cluttered Space](https://arxiv.org/abs/2406.14947/)
+* 📚 Paper: [LiCS: Learned-imitation on Cluttered Space](https://ieeexplore.ieee.org/document/10804084)
 * 🏠 Website: [https://damanikjosh.com/lics](https://damanikjosh.com/lics)
 * ▶️ Videos: [[Practice Session]](https://www.youtube.com/shorts/izjfrVN-3tc) [[Track 1]](https://www.youtube.com/shorts/n4S0fFq_jJc) [[Track 2]](https://www.youtube.com/shorts/HFewc8KsLjI)
 
@@ -25,6 +25,7 @@ A submission of LiCS-KI for the BARN Challenge 2024.
 * 24/06/2024: Our preprint 📚 is now available on arXiv [[Link]](https://arxiv.org/abs/2406.14947)
 * 23/07/2024: Our paper explanation video 🎥 is now available on Youtube [[Link]](https://www.youtube.com/watch?v=b2xXbj4M8x8)
 * 20/11/2024: Second version of preprint 📚 is now available on arXiv [[Link]](https://arxiv.org/abs/2406.14947)
+* 23/12/2024: Our paper 📚 is now published on IEEE Robotics and Automation Letters (RA-L) 🙌 [[Link]](https://ieeexplore.ieee.org/document/10804084)
 
 ## Requirements
 If you run it on a local machine without containers:
